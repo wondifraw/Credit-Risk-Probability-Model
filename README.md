@@ -47,81 +47,321 @@ In highly regulated environments, the marginal gains in predictive power from co
 
 **Best Practice:** Many institutions adopt a hybrid approach—using complex models for internal risk monitoring and simple, interpretable models for regulatory reporting and decision-making. ([HKMA Alternative Credit Scoring](https://www.hkma.gov.hk/media/eng/doc/key-functions/financial-infrastructure/alternative_credit_scoring.pdf), [Towards Data Science](https://towardsdatascience.com/how-to-develop-a-credit-risk-model-and-scorecard-91335fc01f03))
 
+## Exploratory Data Analysis (EDA) - Key Insights
+
+### Dataset Overview
+- **Total Transactions:** 95,662
+- **Fraud Rate:** 0.20% (193 fraudulent transactions out of 95,662 total)
+- **Class Imbalance:** 494.7:1 (highly imbalanced dataset)
+- **Data Quality:** No missing values found in any column
+- **Memory Usage:** 66.48 MB
+
+### Top 5 Key Insights
+
+#### 1. **Extreme Class Imbalance Requires Special Handling**
+The dataset shows a severe class imbalance with only 0.20% fraudulent transactions. This creates significant challenges for model development:
+- **Impact:** Standard accuracy metrics will be misleading (99.8% accuracy with a naive "predict all non-fraud" model)
+- **Solution:** Need to use techniques like SMOTE, class weights, or specialized evaluation metrics (precision, recall, F1-score, AUC-ROC)
+
+#### 2. **Transaction Amount and Value are Strong Predictors**
+The correlation analysis reveals that `Value` (0.567) and `Amount` (0.557) have the strongest correlations with fraud:
+- **Value:** Absolute transaction value shows the highest correlation with fraud
+- **Amount:** Transaction amount (positive for debits, negative for credits) is also highly predictive
+- **Implication:** Higher-value transactions are more likely to be fraudulent, suggesting fraudsters target larger amounts
+
+#### 3. **Provider and Product Patterns Reveal Risk Hotspots**
+Analysis of categorical features shows clear fraud patterns:
+- **ProviderId_3:** Highest fraud rate (2.08%) - 20x higher than average
+- **ProductId_9:** Highest fraud rate (17.65%) - 87x higher than average
+- **ProductCategory 'transport':** Highest fraud rate (8.0%) - 40x higher than average
+- **Implication:** Certain providers and products are significantly riskier and should be flagged for additional scrutiny
+
+#### 4. **Temporal Patterns Suggest Fraud Timing**
+Time-based analysis reveals interesting patterns:
+- **Peak Fraud Hour:** 21:00 (1.01% fraud rate) - likely due to reduced monitoring during late hours
+- **Peak Fraud Day:** Wednesday (0.31% fraud rate) - mid-week patterns
+- **Peak Fraud Month:** February (0.34% fraud rate) - seasonal patterns
+- **Implication:** Real-time fraud detection should be enhanced during high-risk time periods
+
+#### 5. **Outlier Analysis Reveals Data Quality Issues**
+Significant outliers detected in key numerical features:
+- **Amount:** 25.55% outliers (24,441 transactions)
+- **PricingStrategy:** 16.53% outliers (15,814 transactions)
+- **Value:** 9.43% outliers (9,021 transactions)
+- **Implication:** Need robust outlier handling strategies and investigation of extreme values
+
+### Feature Engineering Recommendations
+
+#### High-Priority Features
+1. **Transaction Size Categories:** Create bins for transaction amounts (small, medium, large, very large)
+2. **Time-Based Features:** Hour of day, day of week, month, season
+3. **Provider Risk Score:** Binary flag or risk score for high-risk providers
+4. **Product Risk Score:** Binary flag or risk score for high-risk products
+5. **Transaction Type:** Credit vs. debit indicator (Amount < 0)
+
+#### Secondary Features
+1. **Customer Transaction History:** Count of previous transactions, average transaction size
+2. **Batch Risk:** Fraud rate within the same batch
+3. **Geographic Risk:** Country-based risk patterns (all transactions are from Uganda - CountryCode 256)
+4. **Channel Risk:** Risk patterns by transaction channel
+
+### Model Development Strategy
+
+#### Recommended Approach
+1. **Handle Class Imbalance:** Use SMOTE or class weights in model training
+2. **Feature Selection:** Focus on high-correlation features (Value, Amount) and engineered features
+3. **Model Choice:** Start with interpretable models (Logistic Regression) for regulatory compliance
+4. **Evaluation Metrics:** Use precision, recall, F1-score, and AUC-ROC instead of accuracy
+5. **Cross-Validation:** Implement stratified k-fold cross-validation
+6. **Threshold Optimization:** Optimize decision threshold for business requirements
+
+#### Risk Mitigation
+1. **False Positive Management:** High false positives could lead to customer dissatisfaction
+2. **False Negative Management:** High false negatives could lead to financial losses
+3. **Model Monitoring:** Implement drift detection for feature distributions
+4. **Regular Retraining:** Update model with new data to maintain performance
 
 # Credit Risk Probability Model
 
-A production-ready machine learning project for predicting credit risk probabilities using FastAPI.
+A production-ready machine learning project for predicting credit risk probabilities using FastAPI, with comprehensive exploratory data analysis and robust data processing capabilities.
 
 ## Project Structure
 
 ```
 ├── data/                # Data storage (raw, processed)
 ├── notebooks/           # Jupyter notebooks for EDA
+│   ├── 01-credit-risk-eda.ipynb    # Comprehensive EDA notebook
+│   └── comprehensive-eda.ipynb      # Additional EDA analysis
+├── scripts/             # Python scripts for analysis
+│   ├── comprehensive_eda.py         # Comprehensive EDA script
+│   └── test_eda_module.py           # EDA module testing
 ├── src/                 # Source code
-│   ├── data_processing.py    # Feature engineering
+│   ├── __init__.py           # Package initialization
+│   ├── data_processing.py    # Data preprocessing and feature engineering
+│   ├── eda.py                # Comprehensive EDA module
 │   ├── train.py              # Model training
 │   ├── predict.py            # Inference
-│   └── api/                  # FastAPI app
+│   └── api/                  # FastAPI application
 │       ├── main.py           # API entrypoint
 │       └── pydantic_models.py# API schemas
 ├── tests/               # Unit tests
+│   └── test_data_processing.py  # Data processing tests
+├── config.yaml          # Configuration file
 ├── requirements.txt     # Python dependencies
 ├── Dockerfile           # Docker image definition
 ├── docker-compose.yml   # Docker Compose setup
+├── TASK_COMPLETION_SUMMARY.md  # Project completion summary
 └── README.md            # Project documentation
 ```
 
 ## Features
-- Data processing and feature engineering
-- Model training and evaluation
-- REST API for inference (FastAPI)
-- Dockerized for easy deployment
-- Unit tests for reliability
+
+### 🔍 **Comprehensive EDA Module**
+- **Automated Data Analysis:** Complete exploratory data analysis with statistical insights
+- **Visualization Suite:** Interactive plots for data distribution, correlations, and patterns
+- **Time Series Analysis:** Fraud pattern detection across hours, days, and months
+- **Outlier Detection:** Statistical outlier analysis with IQR methodology
+- **Feature Engineering Insights:** Automated feature creation and analysis
+- **Data Quality Assessment:** Missing value analysis and data integrity checks
+
+### 🛠 **Robust Data Processing**
+- **Flexible Data Loading:** Automatic data file detection and loading
+- **Preprocessing Pipeline:** Comprehensive data cleaning and normalization
+- **Feature Engineering:** Automated creation of derived features
+- **Missing Value Handling:** Multiple imputation strategies (mean, median, mode, constant)
+- **Outlier Management:** Configurable outlier detection and handling
+
+### 🤖 **Machine Learning Pipeline**
+- **Model Training:** Automated model training with cross-validation
+- **Feature Selection:** Correlation-based feature importance analysis
+- **Class Imbalance Handling:** SMOTE and class weight strategies
+- **Model Evaluation:** Comprehensive metrics (precision, recall, F1-score, AUC-ROC)
+
+### 🚀 **Production-Ready API**
+- **FastAPI Framework:** High-performance REST API
+- **Docker Support:** Containerized deployment
+- **Input Validation:** Pydantic models for request/response validation
+- **Error Handling:** Comprehensive error management
+- **Documentation:** Auto-generated API documentation
+
+### 🧪 **Testing & Quality Assurance**
+- **Unit Tests:** Comprehensive test coverage for core modules
+- **Module Testing:** Automated testing of EDA functionality
+- **Data Validation:** Input data integrity checks
+- **Error Recovery:** Graceful handling of edge cases
+
+## Key Improvements Made
+
+### ✅ **Enhanced EDA Capabilities**
+- Fixed pandas truth value ambiguity issues in conditional statements
+- Improved error handling for missing data scenarios
+- Added comprehensive time-based pattern analysis
+- Enhanced visualization capabilities with better styling
+
+### ✅ **Robust Data Processing**
+- Implemented flexible data loading with automatic path detection
+- Added comprehensive missing value handling strategies
+- Enhanced feature engineering with transaction categorization
+- Improved outlier detection and analysis
+
+### ✅ **Production Readiness**
+- Added configuration management with `config.yaml`
+- Enhanced Docker setup for easy deployment
+- Improved API structure with proper validation
+- Added comprehensive documentation
 
 ## Getting Started
 
 ### 1. Clone the repository
 ```bash
-git clone <[repo-url](https://github.com/wondifraw/Credit-Risk-Probability-Model.git)>
+git clone https://github.com/wondifraw/Credit-Risk-Probability-Model.git
 cd Credit-Risk-Probability-Model
 ```
 
 ### 2. Set up the environment
-#### Option A: Local (with virtualenv)
+#### Option A: Local Development
 ```bash
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
-#### Option B: Docker
+
+#### Option B: Docker Deployment
 ```bash
+# Build and run with Docker Compose
 docker-compose up --build
 ```
 
-### 3. Run the API
-#### Locally
+### 3. Run Exploratory Data Analysis
 ```bash
-uvicorn src.api.main:app --reload
+# Run comprehensive EDA script
+python scripts/comprehensive_eda.py
+
+# Or use the Jupyter notebook
+jupyter notebook notebooks/01-credit-risk-eda.ipynb
 ```
-#### With Docker
+
+### 4. Start the API Server
+#### Local Development
+```bash
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Docker Deployment
 ```bash
 docker-compose up
 ```
 
 The API will be available at [http://localhost:8000](http://localhost:8000)
 
-### 4. Run tests
+### 5. Run Tests
 ```bash
+# Run all tests
 pytest
+
+# Run specific test module
+pytest tests/test_data_processing.py
+
+# Run EDA module tests
+python scripts/test_eda_module.py
 ```
 
-## Data
-- Place raw data in `data/raw/`
-- Processed data will be saved in `data/processed/`
+## API Documentation
 
-## Notebooks
-- Use `notebooks/` for exploratory data analysis and prototyping.
+Once the server is running, you can access:
+- **Interactive API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Alternative API Docs:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+## Data Management
+
+### Data Structure
+- **Raw Data:** Place CSV files in `data/raw/`
+- **Processed Data:** Automatically saved to `data/processed/`
+- **Configuration:** Modify `config.yaml` for data processing settings
+
+### Supported Data Formats
+- CSV files with automatic encoding detection
+- Flexible column naming and data types
+- Automatic datetime parsing for time-based analysis
+
+## Development Workflow
+
+### 1. **Data Exploration**
+```bash
+# Run comprehensive EDA
+python scripts/comprehensive_eda.py
+```
+
+### 2. **Model Development**
+```bash
+# Train model with current data
+python src/train.py
+```
+
+### 3. **Testing**
+```bash
+# Run all tests
+pytest
+
+# Test specific functionality
+python scripts/test_eda_module.py
+```
+
+### 4. **API Testing**
+```bash
+# Test API endpoints
+curl -X POST "http://localhost:8000/predict" \
+     -H "Content-Type: application/json" \
+     -d '{"transaction_data": {...}}'
+```
+
+## Configuration
+
+The project uses `config.yaml` for configuration management:
+
+```yaml
+# Data processing settings
+data:
+  raw_data_path: "data/raw/"
+  processed_data_path: "data/processed/"
+  
+# Model settings
+model:
+  target_column: "FraudResult"
+  test_size: 0.2
+  random_state: 42
+
+# API settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+```
 
 ## Contributing
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For questions or issues:
+1. Check the [TASK_COMPLETION_SUMMARY.md](TASK_COMPLETION_SUMMARY.md) for detailed project status
+2. Review the comprehensive EDA insights in the notebooks
+3. Open an issue on GitHub for bugs or feature requests
 
