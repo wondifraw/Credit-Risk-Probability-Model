@@ -315,13 +315,6 @@ pytest
 python scripts/test_eda_module.py
 ```
 
-### 4. **API Testing**
-```bash
-# Test API endpoints
-curl -X POST "http://localhost:8000/predict" \
-     -H "Content-Type: application/json" \
-     -d '{"transaction_data": {...}}'
-```
 
 ## Configuration
 
@@ -354,14 +347,4 @@ api:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For questions or issues:
-1. Check the [TASK_COMPLETION_SUMMARY.md](TASK_COMPLETION_SUMMARY.md) for detailed project status
-2. Review the comprehensive EDA insights in the notebooks
-3. Open an issue on GitHub for bugs or feature requests
 
