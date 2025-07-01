@@ -315,6 +315,63 @@ pytest
 python scripts/test_eda_module.py
 ```
 
+## Model Training & Experiment Tracking
+
+### Training Models
+
+The project supports modular, experiment-tracked model training using scikit-learn and MLflow. By default, it uses processed data from `data/processed/clean_data.csv` and supports robust path handling, so you can run the training script from any directory.
+
+To train and evaluate models:
+```bash
+python src/train.py
+```
+
+- The script will automatically:
+  - Load and preprocess the data
+  - Engineer features and assign the target label
+  - Split data into training and test sets
+  - Train and tune at least two models (Logistic Regression, Random Forest)
+  - Evaluate models using accuracy, precision, recall, F1, and ROC-AUC
+  - Track all experiments, parameters, and metrics with MLflow
+  - Register the best model in the MLflow Model Registry
+
+### Experiment Tracking with MLflow
+
+All model training runs are tracked with MLflow. To view and compare experiments:
+
+```bash
+mlflow ui
+```
+
+- Open [http://localhost:5000](http://localhost:5000) in your browser to access the MLflow tracking UI.
+- You can compare runs, view hyperparameters, metrics, and download models.
+- The best model is automatically registered in the MLflow Model Registry for easy deployment or inference.
+
+### Model Selection & Metrics
+
+- **Model Selection:** The pipeline supports Logistic Regression and Random Forest by default. You can easily add more models in `src/train.py`.
+- **Hyperparameter Tuning:** Uses Grid Search for robust model selection.
+- **Metrics:**
+  - Accuracy
+  - Precision
+  - Recall
+  - F1 Score
+  - ROC-AUC
+
+### Troubleshooting Data Paths
+
+- The training script always resolves the data path relative to the project root, so you can run it from any directory (e.g., root, notebooks, scripts).
+- If you see a `FileNotFoundError`, ensure your processed data is at `data/processed/clean_data.csv` relative to the project root.
+- The script prints the absolute path it is searching for, making debugging easier.
+
+### Running Unit Tests
+
+To ensure data processing and helper functions work as expected:
+```bash
+pytest tests/test_data_processing.py
+```
+
+- Tests cover text cleaning, transaction binning, missing value handling, and more.
 
 ## Configuration
 
