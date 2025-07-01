@@ -74,6 +74,25 @@ def test_add_transaction_size_bins():
     assert set(df['TransactionSizeCategory'].unique()) <= {'small', 'medium', 'large', 'very_large'}
     print('test_add_transaction_size_bins passed.')
 
+def test_clean_text_special_cases():
+    # Test Amharic punctuation removal and lowercasing
+    assert data_processing.clean_text('ሰላም።፣፤፥፦፧፨') == 'ሰላም'
+    # Test removal of non-letter characters
+    assert data_processing.clean_text('Test123!@#') == 'test123'
+    # Test empty string
+    assert data_processing.clean_text('') == ''
+
+def test_add_transaction_size_bins_labels():
+    # Test correct bin assignment
+    df = pd.DataFrame({'Amount': [50, 500, 5000, 50000]})
+    df = data_processing.add_transaction_size_bins(df)
+    expected = ['small', 'medium', 'large', 'very_large']
+    assert set(df['TransactionSizeCategory'].unique()) == set(expected)
+    # Test with custom bins and labels
+    df2 = pd.DataFrame({'Amount': [10, 20, 30]})
+    df2 = data_processing.add_transaction_size_bins(df2, bins=[-np.inf, 15, np.inf], labels=['low', 'high'])
+    assert set(df2['TransactionSizeCategory'].unique()) == set(['low', 'high'])
+
 test_handle_missing_values()
 test_detect_and_remove_outliers()
 test_add_transaction_size_bins()
