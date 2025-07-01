@@ -154,13 +154,19 @@ def process_data_pipeline(raw_data_path='data/raw', filename=None, max_onehot=50
     Automatically chooses one-hot or label encoding based on cardinality.
     """
     try:
-        print(f"Loading data from: {os.path.abspath(raw_data_path)}")
-        files = [f for f in os.listdir(raw_data_path) if f.endswith('.csv')]
+        abs_path = os.path.abspath(raw_data_path)
+        print(f"Loading data from: {abs_path}")
+        if not os.path.exists(abs_path):
+            raise FileNotFoundError(f"Directory does not exist: {abs_path}")
+        files = [f for f in os.listdir(abs_path) if f.endswith('.csv')]
         if not files:
             raise FileNotFoundError('No CSV files found in raw data directory.')
         if filename is None:
             filename = files[0]
-        df = pd.read_csv(os.path.join(raw_data_path, filename))
+        file_path = os.path.join(abs_path, filename)
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File does not exist: {file_path}")
+        df = pd.read_csv(file_path)
         onehot_cols, label_cols = get_categorical_encoding_strategy(df, max_onehot=max_onehot)
         print(f"One-hot encoding columns: {onehot_cols}")
         print(f"Label encoding columns: {label_cols}")
