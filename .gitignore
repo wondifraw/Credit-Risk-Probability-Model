@@ -64,6 +64,8 @@ Pipfile.lock
 
 # data folders
 data/
+Best_model/
+mlruns/
 
 # VS Code
 .vscode/
