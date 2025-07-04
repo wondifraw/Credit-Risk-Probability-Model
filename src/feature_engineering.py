@@ -31,8 +31,9 @@ class AggregateFeatures(BaseEstimator, TransformerMixin):
 
 # Custom transformer for extracting datetime features
 class DateTimeFeatures(BaseEstimator, TransformerMixin):
-    def __init__(self, datetime_col='TransactionStartTime'):
+    def __init__(self, datetime_col='TransactionStartTime', drop_original=False):
         self.datetime_col = datetime_col
+        self.drop_original = drop_original
 
     def fit(self, X, y=None):
         return self
@@ -45,6 +46,8 @@ class DateTimeFeatures(BaseEstimator, TransformerMixin):
             X['transaction_day'] = X[self.datetime_col].dt.day
             X['transaction_month'] = X[self.datetime_col].dt.month
             X['transaction_year'] = X[self.datetime_col].dt.year
+            if self.drop_original:
+                X = X.drop(columns=[self.datetime_col])
         except Exception as e:
             print(f"Error extracting datetime features: {e}")
         return X
@@ -173,7 +176,7 @@ def process_data_pipeline(raw_data_path='data/raw', filename=None, max_onehot=50
         # Build the pipeline with the determined columns
         feature_pipeline = Pipeline([
             ("aggregate", AggregateFeatures()),
-            ("datetime", DateTimeFeatures()),
+            ("datetime", DateTimeFeatures(drop_original=False)),
             ("missing", MissingValueHandler(strategy='mean')),
             ("categorical", CategoricalEncoder(onehot_cols=onehot_cols, label_cols=label_cols)),
             ("scaler", Scaler(method='standard'))
@@ -183,6 +186,15 @@ def process_data_pipeline(raw_data_path='data/raw', filename=None, max_onehot=50
     except Exception as e:
         print(f"Error in processing data pipeline: {e}")
         return None
+
+# Build a default pipeline for import/use
+feature_pipeline = Pipeline([
+    ("aggregate", AggregateFeatures()),
+    ("datetime", DateTimeFeatures(drop_original=False)),
+    ("missing", MissingValueHandler(strategy='mean')),
+    ("categorical", CategoricalEncoder()),  # No columns specified by default
+    ("scaler", Scaler(method='standard'))
+])
 
 # Example usage
 if __name__ == "__main__":

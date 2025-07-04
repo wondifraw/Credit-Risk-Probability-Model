@@ -51,6 +51,7 @@ def cluster_rfm(rfm_df, n_clusters=3, random_state=42):
     Returns:
         rfm_df: DataFrame with added 'cluster' column
     """
+    
     try:
         features = ['Recency', 'Frequency', 'Monetary']
         scaler = StandardScaler()
