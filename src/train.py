@@ -10,6 +10,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from feature_engineering import process_data_pipeline
 from rfm_target_engineering import calculate_rfm, cluster_rfm, assign_high_risk_label, merge_high_risk
+import pickle
+from mlflow.models import infer_signature
 
 
 def load_and_prepare_data(raw_data_path=None, filename='clean_data.csv'):
@@ -30,7 +32,7 @@ def load_and_prepare_data(raw_data_path=None, filename='clean_data.csv'):
         rfm = assign_high_risk_label(rfm)
         df = merge_high_risk(df, rfm)
         # Drop columns not needed for modeling
-        X = df.drop(columns=['is_high_risk', 'CustomerId'], errors='ignore')
+        X = df.drop(columns=['is_high_risk', 'CustomerId', 'TransactionStartTime'], errors='ignore')
         y = df['is_high_risk']
         return X, y
     except Exception as e:
@@ -101,7 +103,15 @@ def train_and_track(X_train, X_test, y_train, y_test, experiment_name='CreditRis
                 metrics = evaluate_model(y_test, y_pred, y_proba)
                 mlflow.log_params(search.best_params_)
                 mlflow.log_metrics(metrics)
-                mlflow.sklearn.log_model(best_estimator, "model")
+                # Log model with input_example and signature
+                input_example = X_train.iloc[:5] if hasattr(X_train, 'iloc') else None
+                signature = infer_signature(X_train, y_train) if input_example is not None else None
+                mlflow.sklearn.log_model(
+                    best_estimator,
+                    artifact_path="model",  # Use 'artifact_path' for compatibility; change to 'name' if using latest MLflow
+                    input_example=input_example,
+                    signature=signature
+                )
                 print(f"{model_name} metrics: {metrics}")
                 if metrics['roc_auc'] > best_score:
                     best_score = metrics['roc_auc']
@@ -116,6 +126,11 @@ def train_and_track(X_train, X_test, y_train, y_test, experiment_name='CreditRis
         print(f"Registering best model: {best_model_name} (ROC-AUC: {best_score:.4f})")
         model_uri = f"runs:/{best_run_id}/model"
         mlflow.register_model(model_uri, f"{experiment_name}_BestModel")
+        # --- Save best model to Best_model folder using pickle ---
+        os.makedirs('Best_model', exist_ok=True)
+        with open(os.path.join('Best_model', f'{best_model_name}.pkl'), 'wb') as f:
+            pickle.dump(best_model, f)
+        print(f"Best model saved to Best_model/{best_model_name}.pkl")
     else:
         print("No model was successfully trained.")
     return best_model_name, best_metrics
